@@ -1,0 +1,525 @@
+- id: '1766007112949'
+  alias: Humidity Control
+  description: Smart humidity control with bathroom offset and dehumidifier
+  triggers:
+  - trigger: state
+    entity_id:
+    - sensor.nrg_itho_e6d0_humidity
+    - sensor.laundry_climate_sensor_humidity
+    - sensor.bathroom_climate_sensor_humidity
+    - sensor.kitchen_climate_sensor_humidity
+    - sensor.toilet_climate_sensor_humidity
+    for:
+      minutes: 1
+  conditions:
+  - condition: template
+    value_template: '{{ ''Timer'' not in states(''input_select.itho_real_preset'')
+      }}'
+  actions:
+  - variables:
+      base: '{{ states(''input_number.target_humidity'') | float }}'
+      bathroom_offset: 0
+      humidity_itho: '{{ states(''sensor.nrg_itho_e6d0_humidity'') | float(0) }}'
+      humidity_kitchen: '{{ states(''sensor.kitchen_climate_sensor_humidity'') | float(0)
+        }}'
+      humidity_bathroom: '{{ states(''sensor.bathroom_climate_sensor_humidity'') |
+        float(0) }}'
+      humidity_laundry: '{{ states(''sensor.laundry_climate_sensor_humidity'') | float(0)
+        }}'
+      humidity_toilet: '{{ states(''sensor.toilet_climate_sensor_humidity'') | float(0)
+        }}'
+      max_excess: '{{ [humidity_itho - base, humidity_laundry - base, humidity_kitchen
+        - base, humidity_toilet - base, humidity_bathroom - base - bathroom_offset]
+        | max }}'
+      bathroom_excess: '{{ humidity_bathroom - base - bathroom_offset }}'
+      current_mode: '{{ states(''input_select.itho_real_preset'') }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ max_excess > 10 }}'
+      sequence:
+      - condition: template
+        value_template: '{{ current_mode != ''High'' }}'
+      - action: fan.set_preset_mode
+        target:
+          entity_id: fan.nrg_itho_e6d0_fan
+        data:
+          preset_mode: High
+    - conditions:
+      - condition: template
+        value_template: '{{ max_excess > 0 and max_excess <= 10 }}'
+      sequence:
+      - condition: template
+        value_template: '{{ current_mode != ''Medium'' }}'
+      - action: fan.set_preset_mode
+        target:
+          entity_id: fan.nrg_itho_e6d0_fan
+        data:
+          preset_mode: Medium
+    - conditions:
+      - condition: template
+        value_template: '{{ max_excess <= 0 }}'
+      sequence:
+      - condition: template
+        value_template: '{{ current_mode != ''Low'' }}'
+      - action: fan.set_preset_mode
+        target:
+          entity_id: fan.nrg_itho_e6d0_fan
+        data:
+          preset_mode: Low
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ bathroom_excess > 5 }}'
+      - condition: state
+        entity_id: switch.bathroom_dehumidifier_socket
+        state: 'off'
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.bathroom_dehumidifier_socket
+    - conditions:
+      - condition: template
+        value_template: '{{ bathroom_excess <= 0 }}'
+      - condition: state
+        entity_id: switch.bathroom_dehumidifier_socket
+        state: 'on'
+      sequence:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.bathroom_dehumidifier_socket
+  mode: single
+- id: '1766079457431'
+  alias: 'Itho: Kitchen W100 buttons'
+  description: Control Itho ventilation from Kitchen W100
+  triggers:
+  - entity_id:
+    - event.kitchen_climate_sensor_button_3
+    - event.bathroom_climate_sensor_button_3
+    - event.laundry_climate_sensor_button_3
+    - event.toilet_climate_sensor_button_3
+    id: plus
+    trigger: state
+  - entity_id:
+    - event.bathroom_climate_sensor_button_4
+    - event.kitchen_climate_sensor_button_4
+    - event.laundry_climate_sensor_button_4
+    - event.toilet_climate_sensor_button_4
+    id: mid
+    trigger: state
+  - entity_id:
+    - event.bathroom_climate_sensor_button_5
+    - event.kitchen_climate_sensor_button_5
+    - event.laundry_climate_sensor_button_5
+    - event.toilet_climate_sensor_button_5
+    id: minus
+    trigger: state
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - plus
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.event_type == ''multi_press_1''
+          }}'
+      sequence:
+      - data:
+          preset_mode: High
+        action: fan.set_preset_mode
+        target:
+          entity_id: fan.nrg_itho_e6d0_fan
+    - conditions:
+      - condition: trigger
+        id:
+        - plus
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.event_type == ''long_release''
+          }}'
+      sequence:
+      - data:
+          preset_mode: Timer 30min
+        action: fan.set_preset_mode
+        target:
+          entity_id: fan.nrg_itho_e6d0_fan
+    - conditions:
+      - condition: trigger
+        id:
+        - mid
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.event_type == ''multi_press_1''
+          }}'
+      sequence:
+      - data:
+          preset_mode: Medium
+        action: fan.set_preset_mode
+        target:
+          entity_id: fan.nrg_itho_e6d0_fan
+    - conditions:
+      - condition: trigger
+        id:
+        - mid
+        alias: double click mid
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.event_type == ''multi_press_2''
+          }}'
+        alias: dobule click
+      sequence:
+      - action: netatmo.clear_temperature_setting
+        target:
+          entity_id:
+          - climate.living_room
+          - climate.alexander_s_bedroom
+          - climate.kateryna_s_bedroom
+          - climate.margarya_s_bedroom
+          - climate.bathroom
+          - climate.master_bedroom
+          - climate.kitchen
+        data: {}
+      - action: notify.google_assistant_sdk
+        metadata: {}
+        data:
+          message: Thermostat is set to schedule
+    - conditions:
+      - condition: trigger
+        id:
+        - mid
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.event_type == ''long_release''
+          }}'
+      sequence:
+      - data:
+          preset_mode: Timer 20min
+        action: fan.set_preset_mode
+        target:
+          entity_id: fan.nrg_itho_e6d0_fan
+    - conditions:
+      - condition: trigger
+        id:
+        - minus
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.event_type == ''multi_press_1''
+          }}'
+      sequence:
+      - data:
+          preset_mode: Low
+        action: fan.set_preset_mode
+        target:
+          entity_id: fan.nrg_itho_e6d0_fan
+    - conditions:
+      - condition: trigger
+        id:
+        - minus
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.event_type == ''long_release''
+          }}'
+      sequence:
+      - data:
+          preset_mode: Timer 10min
+        action: fan.set_preset_mode
+        target:
+          entity_id: fan.nrg_itho_e6d0_fan
+  mode: single
+- id: '1736100001'
+  alias: Itho Preset Mode Sync
+  description: Syncs real preset state based on itho/lastcmd MQTT topic
+  triggers:
+  - trigger: state
+    entity_id: sensor.itho_last_command
+  conditions: []
+  actions:
+  - variables:
+      cmd: '{{ states(''sensor.itho_last_command'') }}'
+      command: '{{ (states(''sensor.itho_last_command'') | from_json).get(''command'',
+        '''') if states(''sensor.itho_last_command'') not in [''unknown'', ''unavailable'',
+        ''''] else '''' }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ ''low'' in command }}'
+      sequence:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.itho_real_preset
+        data:
+          option: Low
+    - conditions:
+      - condition: template
+        value_template: '{{ ''medium'' in command }}'
+      sequence:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.itho_real_preset
+        data:
+          option: Medium
+    - conditions:
+      - condition: template
+        value_template: '{{ ''high'' in command }}'
+      sequence:
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.itho_real_preset
+        data:
+          option: High
+    - conditions:
+      - condition: template
+        value_template: '{{ ''timer:'' in command }}'
+      sequence:
+      - variables:
+          timer_val: '{{ command.split('':'')[1] | int }}'
+          timer1_dur: '{{ states(''input_number.itho_timer_1'') | int }}'
+          timer2_dur: '{{ states(''input_number.itho_timer_2'') | int }}'
+          timer3_dur: '{{ states(''input_number.itho_timer_3'') | int }}'
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ timer_val == timer1_dur }}'
+          sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: input_select.itho_real_preset
+            data:
+              option: Timer1
+        - conditions:
+          - condition: template
+            value_template: '{{ timer_val == timer2_dur }}'
+          sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: input_select.itho_real_preset
+            data:
+              option: Timer2
+        - conditions:
+          - condition: template
+            value_template: '{{ timer_val == timer3_dur }}'
+          sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: input_select.itho_real_preset
+            data:
+              option: Timer3
+        default:
+        - action: input_select.select_option
+          target:
+            entity_id: input_select.itho_real_preset
+          data:
+            option: Manual
+    - conditions:
+      - condition: template
+        value_template: '{{ ''speed:'' in command }}'
+      sequence:
+      - variables:
+          speed_val: '{{ command.split('':'')[1] | int }}'
+          speed_low: '{{ states(''input_number.itho_speed_low'') | int }}'
+          speed_med: '{{ states(''input_number.itho_speed_medium'') | int }}'
+          speed_high: '{{ states(''input_number.itho_speed_high'') | int }}'
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ speed_val == speed_low }}'
+          sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: input_select.itho_real_preset
+            data:
+              option: Low
+        - conditions:
+          - condition: template
+            value_template: '{{ speed_val == speed_med }}'
+          sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: input_select.itho_real_preset
+            data:
+              option: Medium
+        - conditions:
+          - condition: template
+            value_template: '{{ speed_val == speed_high }}'
+          sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: input_select.itho_real_preset
+            data:
+              option: High
+        default:
+        - action: input_select.select_option
+          target:
+            entity_id: input_select.itho_real_preset
+          data:
+            option: Manual
+  mode: single
+- id: '1736100002'
+  alias: Itho Timer Reset
+  description: Resets preset_mode to Low after timer expires
+  triggers:
+  - trigger: state
+    entity_id: input_select.itho_real_preset
+    to:
+    - Timer1
+    - Timer2
+    - Timer3
+  conditions: []
+  actions:
+  - variables:
+      triggered_preset: '{{ trigger.to_state.state }}'
+      timer_minutes: "{% if trigger.to_state.state == 'Timer1' %}\n  {{ states('input_number.itho_timer_1')
+        | int }}\n{% elif trigger.to_state.state == 'Timer2' %}\n  {{ states('input_number.itho_timer_2')
+        | int }}\n{% elif trigger.to_state.state == 'Timer3' %}\n  {{ states('input_number.itho_timer_3')
+        | int }}\n{% else %}\n  60\n{% endif %}"
+  - delay:
+      minutes: '{{ timer_minutes }}'
+  - condition: template
+    value_template: '{{ states(''input_select.itho_real_preset'') == triggered_preset
+      }}'
+  - action: input_select.select_option
+    target:
+      entity_id: input_select.itho_real_preset
+    data:
+      option: Low
+  mode: restart
+- id: '1767717728834'
+  alias: Notify about doorbell
+  description: ''
+  triggers:
+  - device_id: 36e9f6e333a52d3c8a969c0993bafb93
+    domain: nest
+    type: doorbell_chime
+    trigger: device
+    id: doorbell
+  - device_id: 36e9f6e333a52d3c8a969c0993bafb93
+    domain: nest
+    type: camera_person
+    trigger: device
+    id: person
+  - device_id: 36e9f6e333a52d3c8a969c0993bafb93
+    domain: nest
+    type: camera_motion
+    trigger: device
+    id: motion
+  conditions: []
+  actions:
+  - action: shell_command.copy_latest_nest_media
+    data:
+      device_id: '{{ trigger.event.data.device_id }}'
+    response_variable: media_result
+  - variables:
+      media_type: '{{ media_result.stdout | default(''none'') | trim }}'
+      caption: "{% if trigger.id == 'doorbell' %}\U0001F514 Someone at the door! {%
+        elif trigger.id == 'person' %}\U0001F6B6 Person detected! {% else %}\U0001F6A8
+        Motion detected! {% endif %}\n"
+      device_id: '{{ trigger.event.data.device_id }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ media_type == ''video'' }}'
+      sequence:
+      - action: telegram_bot.send_video
+        data:
+          file: /config/nest/event_media/{{ device_id }}/latest.mp4
+          caption: '{{ caption }}'
+          config_entry_id: 01KEA2E2E481J54YWNEPQZJKT9
+    - conditions:
+      - condition: template
+        value_template: '{{ media_type == ''gif'' }}'
+      sequence:
+      - action: telegram_bot.send_animation
+        data:
+          file: /config/nest/event_media/{{ device_id }}/latest.gif
+          caption: '{{ caption }}'
+          config_entry_id: 01KEA2E2E481J54YWNEPQZJKT9
+    default:
+    - action: telegram_bot.send_message
+      data:
+        message: '{{ caption }} (no media)'
+        config_entry_id: 01KEA2E2E481J54YWNEPQZJKT9
+  mode: single
+- id: '1767781420519'
+  alias: Notify about HA updates
+  description: ''
+  triggers:
+  - trigger: time_pattern
+    hours: /1
+  conditions: []
+  actions:
+  - variables:
+      available_updates: '{{ states.update | selectattr(''state'', ''eq'', ''on'')
+        | map(attribute=''entity_id'') | list }}'
+      already_notified: '{{ states(''input_text.notified_updates'').split('','') }}'
+  - repeat:
+      for_each: '{{ available_updates }}'
+      sequence:
+      - condition: template
+        value_template: '{{ repeat.item not in already_notified }}'
+      - action: telegram_bot.send_message
+        data:
+          message: "\U0001F195 *{{ state_attr(repeat.item, 'friendly_name') | replace('
+            update', '') | replace(' Update', '') }}* update! `{{ state_attr(repeat.item,
+            'installed_version') }}` → `{{ state_attr(repeat.item, 'latest_version')
+            }}`\n"
+          config_entry_id: 01KEA2E2E481J54YWNEPQZJKT9
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.notified_updates
+        data:
+          value: '{{ (already_notified + [repeat.item]) | join('','') }}'
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.notified_updates
+    data:
+      value: '{{ available_updates | join('','') }}'
+  mode: single
+- id: '1768434669188'
+  alias: Camera person alert
+  triggers:
+  - entity_id:
+    - binary_sensor.backyard_camera_person
+    - binary_sensor.front_door_camera_person
+    to:
+    - 'on'
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: '{{ (as_timestamp(now()) - states(''input_number.last_alert_''
+      ~ trigger.entity_id.split(''.'')[1]) | float(0)) > 35 }}
+
+      '
+  actions:
+  - variables:
+      cameras:
+        binary_sensor.backyard_camera_person:
+          name: backyard
+          camera_entity: camera.backyard_camera_fluent
+          folder: backyard
+        binary_sensor.front_door_camera_person:
+          name: front door
+          folder: front-door
+          camera_entity: camera.front_door_camera_fluent
+      camera: '{{ cameras[trigger.entity_id] }}'
+      timestamp_file: '{{ now().strftime(''%Y%m%d_%H%M%S'') }}'
+      timestamp_display: '{{ now().strftime(''%d.%m.%Y %H:%M:%S'') }}'
+      filename: /media/reolink/{{ camera.folder }}/{{ timestamp_file }}.mp4
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.last_alert_{{ trigger.entity_id.split('.')[1] }}
+    data:
+      value: '{{ as_timestamp(now()) }}'
+  - target:
+      entity_id: '{{ camera.camera_entity }}'
+    data:
+      duration: 30
+      filename: '{{ filename }}'
+      lookback: 30
+    action: camera.record
+  - delay: 35
+  - action: telegram_bot.send_video
+    data:
+      verify_ssl: true
+      config_entry_id: 01KEA2E2E481J54YWNEPQZJKT9
+      file: '{{ filename }}'
+      caption: "\U0001F6A8 Person seen: {{ camera.name }} at {{ timestamp_display
+        }}"
+  - action: shell_command.cleanup_recordings
+    data:
+      folder: '{{ camera.folder }}'
+  mode: parallel
+  max: 2

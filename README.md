@@ -78,8 +78,35 @@ ssh homeassistant.local "ls /homeassistant/custom_components/"
 ssh homeassistant.local "cat /homeassistant/automations.yaml"
 ```
 
+## API Token
+
+Long-lived access token stored at `~/.ha_token` on HA for CLI/API access.
+
+```bash
+# Reload automations
+TOKEN=$(ssh homeassistant.local "cat ~/.ha_token")
+curl -X POST "http://homeassistant.local:8123/api/services/automation/reload" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"
+```
+
+## Automations
+
+### Humidity Control
+Controls both Itho ventilation and bathroom dehumidifier based on humidity levels.
+
+| Entity | Description |
+|--------|-------------|
+| `input_number.target_humidity` | Target humidity (default: 60%) |
+| `sensor.bathroom_climate_sensor_humidity` | Bathroom humidity sensor |
+| `switch.bathroom_dehumidifier_socket` | Dehumidifier smart plug (Tuya/LSC) |
+
+**Logic:**
+- Dehumidifier ON: when bathroom humidity > target + 5%
+- Dehumidifier OFF: when bathroom humidity <= target
+
 ## Notes
 
 - The `ha` CLI requires API token authentication
 - User `bubenkoff` is in the `wheel` group (sudo access)
 - HA database: `home-assistant_v2.db` (~243MB)
+- Files owned by root - use `sudo` via SSH to edit
