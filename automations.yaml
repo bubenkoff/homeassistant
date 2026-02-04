@@ -523,3 +523,58 @@
       folder: '{{ camera.folder }}'
   mode: parallel
   max: 2
+- id: '1769950001'
+  alias: Boiler Weather Compensation
+  description: Weather-dependent boiler setpoint to reduce short cycling
+  triggers:
+  - trigger: time_pattern
+    minutes: /5
+  - trigger: state
+    entity_id:
+    - climate.living_room
+    - climate.kitchen
+    - climate.kateryna_s_bedroom
+    - climate.master_bedroom
+    - climate.margarya_s_bedroom
+    - climate.alexander_s_bedroom
+    - climate.bathroom
+    for:
+      seconds: 30
+  conditions: []
+  actions:
+  - variables:
+      outside_temp: '{{ states(''sensor.opentherm_boiler_outside_temperature'') | float(5) }}'
+      demand_living: '{{ (state_attr(''climate.living_room'', ''temperature'') | float(17)) - (state_attr(''climate.living_room'', ''current_temperature'') | float(17)) }}'
+      demand_kitchen: '{{ (state_attr(''climate.kitchen'', ''temperature'') | float(17)) - (state_attr(''climate.kitchen'', ''current_temperature'') | float(17)) }}'
+      demand_kateryna: '{{ (state_attr(''climate.kateryna_s_bedroom'', ''temperature'') | float(17)) - (state_attr(''climate.kateryna_s_bedroom'', ''current_temperature'') | float(17)) }}'
+      demand_master: '{{ (state_attr(''climate.master_bedroom'', ''temperature'') | float(17)) - (state_attr(''climate.master_bedroom'', ''current_temperature'') | float(17)) }}'
+      demand_margarya: '{{ (state_attr(''climate.margarya_s_bedroom'', ''temperature'') | float(17)) - (state_attr(''climate.margarya_s_bedroom'', ''current_temperature'') | float(17)) }}'
+      demand_alexander: '{{ (state_attr(''climate.alexander_s_bedroom'', ''temperature'') | float(17)) - (state_attr(''climate.alexander_s_bedroom'', ''current_temperature'') | float(17)) }}'
+      demand_bathroom: '{{ (state_attr(''climate.bathroom'', ''temperature'') | float(17)) - (state_attr(''climate.bathroom'', ''current_temperature'') | float(17)) }}'
+      max_heat_demand: '{{ [demand_living, demand_kitchen, demand_kateryna, demand_master, demand_margarya, demand_alexander, demand_bathroom] | max }}'
+      base_setpoint: '{{ 25 + (15 - outside_temp) * 1.0 }}'
+      calculated_setpoint: '{{ (base_setpoint | float) + (max_heat_demand | float) * 5 }}'
+      final_setpoint: '{{ [[calculated_setpoint | float, 55] | min, 20] | max | round(0) }}'
+      current_setpoint: '{{ states(''sensor.opentherm_boiler_control_setpoint_1'') | float(0) }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ max_heat_demand | float > 0.2 }}'
+      - condition: template
+        value_template: '{{ ((final_setpoint | float) - (current_setpoint | float)) | abs > 2 }}'
+      sequence:
+      - action: opentherm_gw.set_control_setpoint
+        data:
+          gateway_id: otgw
+          temperature: '{{ final_setpoint | float }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ max_heat_demand | float <= 0 }}'
+      - condition: template
+        value_template: '{{ current_setpoint | float > 0 }}'
+      sequence:
+      - action: opentherm_gw.set_control_setpoint
+        data:
+          gateway_id: otgw
+          temperature: 0
+  mode: single

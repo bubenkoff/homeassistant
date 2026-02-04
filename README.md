@@ -94,6 +94,19 @@ curl -X POST "http://homeassistant.local:8123/api/services/automation/reload" \
 ### Humidity Control
 Controls both Itho ventilation and bathroom dehumidifier based on humidity levels.
 
+### Boiler Weather Compensation
+Reduces short cycling by calculating optimal water setpoint based on weather and heat demand.
+
+| Entity | Description |
+|--------|-------------|
+| `sensor.opentherm_boiler_outside_temperature` | Outside temperature |
+| `sensor.opentherm_boiler_control_setpoint_1` | Current water setpoint |
+
+**Logic:**
+- When any room needs heat (demand > 0.2°C): setpoint = 25 + (15 - outside_temp) + demand * 5
+- When all rooms at target (demand <= 0): setpoint = 0 (boiler off)
+- Setpoint range: 20-55°C
+
 | Entity | Description |
 |--------|-------------|
 | `input_number.target_humidity` | Target humidity (default: 60%) |
