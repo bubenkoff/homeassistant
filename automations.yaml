@@ -556,6 +556,17 @@
       calculated_setpoint: '{{ (base_setpoint | float) + (max_heat_demand | float) * 5 }}'
       final_setpoint: '{{ [[calculated_setpoint | float, 55] | min, 20] | max | round(0) }}'
       current_setpoint: '{{ states(''sensor.opentherm_boiler_control_setpoint_1'') | float(0) }}'
+      max_modulation: >
+        {% if max_heat_demand | float <= 0 %}
+          100
+        {% elif max_heat_demand | float <= 0.5 %}
+          50
+        {% elif max_heat_demand | float <= 1.0 %}
+          75
+        {% else %}
+          100
+        {% endif %}
+      current_modulation: '{{ states(''sensor.opentherm_gateway_otgw_otgw_max_rel_modulation_level_setting'') | float(100) }}'
   - choose:
     - conditions:
       - condition: template
@@ -567,6 +578,20 @@
         data:
           gateway_id: otgw
           temperature: '{{ final_setpoint | float }}'
+      - action: opentherm_gw.set_max_modulation
+        data:
+          gateway_id: otgw
+          level: '{{ max_modulation | int }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ max_heat_demand | float > 0.2 }}'
+      - condition: template
+        value_template: '{{ (max_modulation | int) != (current_modulation | int) }}'
+      sequence:
+      - action: opentherm_gw.set_max_modulation
+        data:
+          gateway_id: otgw
+          level: '{{ max_modulation | int }}'
     - conditions:
       - condition: template
         value_template: '{{ max_heat_demand | float <= 0 }}'
@@ -577,4 +602,8 @@
         data:
           gateway_id: otgw
           temperature: 0
+      - action: opentherm_gw.set_max_modulation
+        data:
+          gateway_id: otgw
+          level: -1
   mode: single

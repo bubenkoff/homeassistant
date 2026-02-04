@@ -107,6 +107,13 @@ Reduces short cycling by calculating optimal water setpoint based on weather and
 - When all rooms at target (demand <= 0): setpoint = 0 (boiler off)
 - Setpoint range: 20-55°C
 
+**Modulation control:**
+| Heat demand | Max modulation |
+|-------------|----------------|
+| <= 0.5°C | 50% |
+| 0.5 - 1.0°C | 75% |
+| > 1.0°C | 100% |
+
 | Entity | Description |
 |--------|-------------|
 | `input_number.target_humidity` | Target humidity (default: 60%) |
