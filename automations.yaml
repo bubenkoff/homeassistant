@@ -596,12 +596,12 @@
       - condition: template
         value_template: '{{ max_heat_demand | float <= 0 }}'
       - condition: template
-        value_template: '{{ current_setpoint | float > 0 }}'
+        value_template: '{{ current_setpoint | float > 10 }}'
       sequence:
       - action: opentherm_gw.set_control_setpoint
         data:
           gateway_id: otgw
-          temperature: 0
+          temperature: 10
       - action: opentherm_gw.set_max_modulation
         data:
           gateway_id: otgw
