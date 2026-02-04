@@ -94,25 +94,32 @@ curl -X POST "http://homeassistant.local:8123/api/services/automation/reload" \
 ### Humidity Control
 Controls both Itho ventilation and bathroom dehumidifier based on humidity levels.
 
-### Boiler Weather Compensation
-Reduces short cycling by calculating optimal water setpoint based on weather and heat demand.
+### Boiler Modulation Control
+Limits boiler power based on heat demand to reduce short cycling.
+
+**Architecture:**
+- **Netatmo Modulating Thermostat** → controls water setpoint (temperature)
+- **OTGW (OpenTherm Gateway)** → limits max modulation (power)
+- **This automation** → sets max modulation based on room heat demand
 
 | Entity | Description |
 |--------|-------------|
-| `weather.forecast_home` | Outside temperature (from weather integration) |
-| `sensor.opentherm_boiler_control_setpoint_1` | Current water setpoint |
+| `climate.*` | Netatmo TRVs in each room |
+| `sensor.opentherm_boiler_maximum_relative_modulation_level` | Current max modulation |
+| `sensor.opentherm_gateway_otgw_otgw_max_rel_modulation_level_setting` | OTGW override setting |
 
-**Logic:**
-- When any room needs heat (demand > 0.2°C): setpoint = 25 + (15 - outside_temp) + demand * 5
-- When all rooms at target (demand <= 0): setpoint = 0 (boiler off)
-- Setpoint range: 20-55°C
-
-**Modulation control:**
+**Modulation control (based on heat demand):**
 | Heat demand | Max modulation |
 |-------------|----------------|
-| <= 0.5°C | 50% |
-| 0.5 - 1.0°C | 75% |
-| > 1.0°C | 100% |
+| ≤ 0°C | -1 (reset) |
+| ≤ 0.5°C | 30% |
+| ≤ 1.0°C | 40% |
+| ≤ 2.0°C | 50% |
+| > 2.0°C | 80% |
+
+*Note: 20% is too low - boiler can't sustain flame. 30-40% is optimal (0 short cycles).*
+
+*Heat demand = target_temp - current_temp (max across all rooms)*
 
 | Entity | Description |
 |--------|-------------|
