@@ -543,7 +543,7 @@
   conditions: []
   actions:
   - variables:
-      outside_temp: '{{ states(''sensor.opentherm_boiler_outside_temperature'') | float(5) }}'
+      outside_temp: '{{ state_attr(''weather.forecast_home'', ''temperature'') | float(5) }}'
       demand_living: '{{ (state_attr(''climate.living_room'', ''temperature'') | float(17)) - (state_attr(''climate.living_room'', ''current_temperature'') | float(17)) }}'
       demand_kitchen: '{{ (state_attr(''climate.kitchen'', ''temperature'') | float(17)) - (state_attr(''climate.kitchen'', ''current_temperature'') | float(17)) }}'
       demand_kateryna: '{{ (state_attr(''climate.kateryna_s_bedroom'', ''temperature'') | float(17)) - (state_attr(''climate.kateryna_s_bedroom'', ''current_temperature'') | float(17)) }}'

@@ -99,7 +99,7 @@ Reduces short cycling by calculating optimal water setpoint based on weather and
 
 | Entity | Description |
 |--------|-------------|
-| `sensor.opentherm_boiler_outside_temperature` | Outside temperature |
+| `weather.forecast_home` | Outside temperature (from weather integration) |
 | `sensor.opentherm_boiler_control_setpoint_1` | Current water setpoint |
 
 **Logic:**
