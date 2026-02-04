@@ -559,10 +559,12 @@
       max_modulation: >
         {% if max_heat_demand | float <= 0 %}
           100
+        {% elif max_heat_demand | float <= 0.3 %}
+          30
         {% elif max_heat_demand | float <= 0.5 %}
-          50
+          40
         {% elif max_heat_demand | float <= 1.0 %}
-          75
+          60
         {% else %}
           100
         {% endif %}
