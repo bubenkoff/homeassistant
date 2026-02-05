@@ -270,40 +270,28 @@
           timer1_dur: '{{ states(''input_number.itho_timer_1'') | int }}'
           timer2_dur: '{{ states(''input_number.itho_timer_2'') | int }}'
           timer3_dur: '{{ states(''input_number.itho_timer_3'') | int }}'
-      - choose:
-        - conditions:
-          - condition: template
-            value_template: '{{ timer_val == timer1_dur }}'
-          sequence:
-          - action: input_select.select_option
-            target:
-              entity_id: input_select.itho_real_preset
-            data:
-              option: Timer1
-        - conditions:
-          - condition: template
-            value_template: '{{ timer_val == timer2_dur }}'
-          sequence:
-          - action: input_select.select_option
-            target:
-              entity_id: input_select.itho_real_preset
-            data:
-              option: Timer2
-        - conditions:
-          - condition: template
-            value_template: '{{ timer_val == timer3_dur }}'
-          sequence:
-          - action: input_select.select_option
-            target:
-              entity_id: input_select.itho_real_preset
-            data:
-              option: Timer3
-        default:
-        - action: input_select.select_option
-          target:
-            entity_id: input_select.itho_real_preset
-          data:
-            option: Manual
+          timer_preset: >
+            {% if timer_val == timer1_dur %}
+              Timer1
+            {% elif timer_val == timer2_dur %}
+              Timer2
+            {% elif timer_val == timer3_dur %}
+              Timer3
+            {% else %}
+              Manual
+            {% endif %}
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.itho_real_preset
+        data:
+          option: Manual
+      - delay:
+          milliseconds: 100
+      - action: input_select.select_option
+        target:
+          entity_id: input_select.itho_real_preset
+        data:
+          option: '{{ timer_preset | trim }}'
     - conditions:
       - condition: template
         value_template: '{{ ''speed:'' in command }}'
@@ -527,6 +515,8 @@
   alias: Boiler Modulation Control
   description: Control boiler power based on heat demand (Netatmo controls setpoint)
   triggers:
+  - trigger: homeassistant
+    event: start
   - trigger: time_pattern
     minutes: /1
   - trigger: state
@@ -571,3 +561,17 @@
       gateway_id: otgw
       level: '{{ max_modulation | int }}'
   mode: single
+- id: 'auto_update_scheduled'
+  alias: Auto Update Scheduled
+  description: Automatically update Home Assistant and components on schedule
+  use_blueprint:
+    path: edwardtfn/auto_update_scheduled.yaml
+    input:
+      schedule_entity: schedule.auto_update_schedule
+      schedule_monthday_earliest: 5
+      core_os_update_mode: all
+      firmware_update_mode: all
+      general_update_mode: all
+      backup_bool: true
+      restart_type: core
+      verbose_logging_bool: true
