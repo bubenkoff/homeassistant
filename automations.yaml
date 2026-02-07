@@ -17,6 +17,8 @@
       }}'
   actions:
   - variables:
+      humidity_high_threshold: 10
+      humidity_dehumidifier_threshold: 5
       base: '{{ states(''input_number.target_humidity'') | float }}'
       bathroom_offset: 0
       humidity_itho: '{{ states(''sensor.nrg_itho_e6d0_humidity'') | float(0) }}'
@@ -36,7 +38,7 @@
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{ max_excess > 10 }}'
+        value_template: '{{ max_excess > humidity_high_threshold }}'
       sequence:
       - condition: template
         value_template: '{{ current_mode != ''High'' }}'
@@ -47,7 +49,7 @@
           preset_mode: High
     - conditions:
       - condition: template
-        value_template: '{{ max_excess > 0 and max_excess <= 10 }}'
+        value_template: '{{ max_excess > 0 and max_excess <= humidity_high_threshold }}'
       sequence:
       - condition: template
         value_template: '{{ current_mode != ''Medium'' }}'
@@ -70,7 +72,7 @@
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{ bathroom_excess > 5 }}'
+        value_template: '{{ bathroom_excess > humidity_dehumidifier_threshold }}'
       - condition: state
         entity_id: switch.bathroom_dehumidifier_socket
         state: 'off'
@@ -163,7 +165,7 @@
       - condition: template
         value_template: '{{ trigger.to_state.attributes.event_type == ''multi_press_2''
           }}'
-        alias: dobule click
+        alias: double click
       sequence:
       - action: netatmo.clear_temperature_setting
         target:
@@ -367,7 +369,7 @@
   mode: restart
 - id: '1767717728834'
   alias: Notify about doorbell
-  description: ''
+  description: Notify via Telegram on doorbell ring, person and motion detection
   triggers:
   - device_id: 36e9f6e333a52d3c8a969c0993bafb93
     domain: nest
@@ -423,7 +425,7 @@
   mode: single
 - id: '1767781420519'
   alias: Notify about HA updates
-  description: ''
+  description: Notify via Telegram about available HA updates (hourly check)
   triggers:
   - trigger: time_pattern
     hours: /1
@@ -445,11 +447,6 @@
             'installed_version') }}` → `{{ state_attr(repeat.item, 'latest_version')
             }}`\n"
           config_entry_id: 01KEA2E2E481J54YWNEPQZJKT9
-      - action: input_text.set_value
-        target:
-          entity_id: input_text.notified_updates
-        data:
-          value: '{{ (already_notified + [repeat.item]) | join('','') }}'
   - action: input_text.set_value
     target:
       entity_id: input_text.notified_updates
@@ -533,6 +530,13 @@
   conditions: []
   actions:
   - variables:
+      mod_threshold_low: 0.5
+      mod_threshold_med: 1.0
+      mod_threshold_high: 2.0
+      mod_level_low: 30
+      mod_level_med: 40
+      mod_level_high: 50
+      mod_level_max: 80
       demand_living: '{{ (state_attr(''climate.living_room'', ''temperature'') | float(17)) - (state_attr(''climate.living_room'', ''current_temperature'') | float(17)) }}'
       demand_kitchen: '{{ (state_attr(''climate.kitchen'', ''temperature'') | float(17)) - (state_attr(''climate.kitchen'', ''current_temperature'') | float(17)) }}'
       demand_kateryna: '{{ (state_attr(''climate.kateryna_s_bedroom'', ''temperature'') | float(17)) - (state_attr(''climate.kateryna_s_bedroom'', ''current_temperature'') | float(17)) }}'
@@ -543,15 +547,15 @@
       max_heat_demand: '{{ [demand_living, demand_kitchen, demand_kateryna, demand_master, demand_margarya, demand_alexander, demand_bathroom] | max }}'
       max_modulation: >
         {% if max_heat_demand | float <= 0 %}
-          -1
-        {% elif max_heat_demand | float <= 0.5 %}
-          30
-        {% elif max_heat_demand | float <= 1.0 %}
-          40
-        {% elif max_heat_demand | float <= 2.0 %}
-          50
+          {{ mod_level_low }}
+        {% elif max_heat_demand | float <= mod_threshold_low %}
+          {{ mod_level_low }}
+        {% elif max_heat_demand | float <= mod_threshold_med %}
+          {{ mod_level_med }}
+        {% elif max_heat_demand | float <= mod_threshold_high %}
+          {{ mod_level_high }}
         {% else %}
-          80
+          {{ mod_level_max }}
         {% endif %}
       current_modulation: '{{ states(''sensor.opentherm_gateway_otgw_otgw_max_rel_modulation_level_setting'') | float(100) }}'
   - condition: template
