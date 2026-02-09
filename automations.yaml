@@ -558,8 +558,9 @@
           {{ mod_level_max }}
         {% endif %}
       current_modulation: '{{ states(''sensor.opentherm_gateway_otgw_otgw_max_rel_modulation_level_setting'') | float(100) }}'
+      effective_modulation: '{{ 100 if (max_modulation | int) == -1 else (max_modulation | int) }}'
   - condition: template
-    value_template: '{{ (max_modulation | int) != (current_modulation | int) }}'
+    value_template: '{{ (effective_modulation | int) != (current_modulation | int) }}'
   - action: opentherm_gw.set_max_modulation
     data:
       gateway_id: otgw
