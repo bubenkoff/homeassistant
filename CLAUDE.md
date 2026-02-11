@@ -1,5 +1,9 @@
 # Project Instructions
 
+## Git
+
+- **Always `git pull`** at the start of work to ensure the local repo is up to date.
+
 ## Changelog
 
 - **Always read `CHANGELOG.md`** at the start of work to understand recent changes.
