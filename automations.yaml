@@ -530,9 +530,9 @@
   conditions: []
   actions:
   - variables:
-      mod_threshold_low: 0.5
-      mod_threshold_med: 1.0
-      mod_threshold_high: 2.0
+      mod_threshold_low: 1.0
+      mod_threshold_med: 1.5
+      mod_threshold_high: 3.0
       mod_level_low: 30
       mod_level_med: 40
       mod_level_high: 50

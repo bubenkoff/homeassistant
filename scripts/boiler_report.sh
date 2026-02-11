@@ -272,11 +272,11 @@ for h in changes:
         if max_demand is not None:
             if max_demand <= 0:
                 expected = 100
-            elif max_demand <= 0.5:
-                expected = 30
             elif max_demand <= 1.0:
+                expected = 30
+            elif max_demand <= 1.5:
                 expected = 40
-            elif max_demand <= 2.0:
+            elif max_demand <= 3.0:
                 expected = 50
             else:
                 expected = 80
