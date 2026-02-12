@@ -124,7 +124,7 @@ Sleepy end devices — after Thread network recovery, press button on each W100 
 ### Connection
 
 - **Protocol:** Zigbee via M100 hub (bridged to HA through Matter)
-- **Mode:** Decoupled (all 4 buttons are wireless, relays controlled via Aqara automations)
+- **Mode:** Coupled (upper buttons control relays directly; lower buttons via Aqara automations)
 - **No neutral:** Works without neutral wire (min 5W load)
 - **LED:** Configured via Aqara Home app (stored on device)
 - **Automations:** Managed in Aqara Home app (runs on M100 hub, no HA automation needed)
