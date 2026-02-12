@@ -17,37 +17,37 @@
 ### Architecture
 
 ```
-Netatmo TRVs (7 кімнат) → встановлюють setpoint (цільова температура води)
-Boiler Modulation Control → обмежує max modulation (потужність котла)
-OpenTherm Gateway (OTGW) → передає команди котлу через opentherm_gw.set_max_modulation
+Netatmo TRVs (7 rooms) → set water temperature setpoint
+Boiler Modulation Control → limits max modulation (boiler power)
+OpenTherm Gateway (OTGW) → sends commands to boiler via opentherm_gw.set_max_modulation
 ```
 
-Netatmo керує **коли** гріти (setpoint), автоматизація керує **як сильно** (modulation).
+Netatmo controls **when** to heat (setpoint), automation controls **how hard** (modulation).
 
-### Кімнати (Netatmo TRVs)
+### Rooms (Netatmo TRVs)
 
-| Entity                          | Назва              |
+| Entity                          | Room               |
 |---------------------------------|--------------------|
-| `climate.living_room`           | Вітальня           |
-| `climate.kitchen`               | Кухня              |
-| `climate.master_bedroom`        | Спальня батьків    |
-| `climate.kateryna_s_bedroom`    | Спальня Катерини   |
-| `climate.margarya_s_bedroom`    | Спальня Маргариті  |
-| `climate.alexander_s_bedroom`   | Спальня Олександра |
-| `climate.bathroom`              | Ванна              |
+| `climate.living_room`           | Living Room        |
+| `climate.kitchen`               | Kitchen            |
+| `climate.master_bedroom`        | Master Bedroom     |
+| `climate.kateryna_s_bedroom`    | Kateryna's Bedroom |
+| `climate.margarya_s_bedroom`    | Margarya's Bedroom |
+| `climate.alexander_s_bedroom`   | Alexander's Bedroom|
+| `climate.bathroom`              | Bathroom           |
 
-### Автоматизація: Boiler Modulation Control
+### Automation: Boiler Modulation Control
 
-**Файл:** `automations.yaml`, id: `boiler_modulation_control`
+**File:** `automations.yaml`, id: `boiler_modulation_control`
 
-**Тригери:**
-- Старт Home Assistant
-- Кожну 1 хвилину (time_pattern)
-- Зміна стану будь-якого climate entity (з затримкою 30с)
+**Triggers:**
+- Home Assistant start
+- Every 1 minute (time_pattern)
+- Any climate entity state change (with 30s delay)
 
-**Логіка:** Розраховує `max_heat_demand` — максимальну різницю (target - current) серед усіх кімнат, та встановлює відповідний рівень модуляції:
+**Logic:** Calculates `max_heat_demand` — maximum difference (target - current) across all rooms, and sets the corresponding modulation level:
 
-| Demand (°C)  | Max Modulation | Змінна           |
+| Demand (°C)  | Max Modulation | Variable         |
 |--------------|----------------|------------------|
 | ≤ 0          | 30%            | mod_level_low    |
 | ≤ 1.0        | 30%            | mod_level_low    |
@@ -55,66 +55,106 @@ Netatmo керує **коли** гріти (setpoint), автоматизаці�
 | ≤ 3.0        | 50%            | mod_level_high   |
 | > 3.0        | 80%            | mod_level_max    |
 
-**Умова:** Команда надсилається тільки якщо нове значення відрізняється від поточного.
+**Condition:** Command is sent only if the new value differs from current.
 
-### Ключові сенсори
+### Key Sensors
 
-| Entity                                                                    | Опис                          |
+| Entity                                                                    | Description                   |
 |---------------------------------------------------------------------------|-------------------------------|
-| `sensor.opentherm_gateway_otgw_otgw_max_rel_modulation_level_setting`     | Поточний ліміт модуляції      |
-| `binary_sensor.opentherm_boiler_flame`                                    | Стан полум'я (on/off)         |
-| `binary_sensor.opentherm_boiler_hot_water`                                | Режим ГВП (DHW)               |
+| `sensor.opentherm_gateway_otgw_otgw_max_rel_modulation_level_setting`     | Current modulation limit      |
+| `binary_sensor.opentherm_boiler_flame`                                    | Flame status (on/off)         |
+| `binary_sensor.opentherm_boiler_hot_water`                                | DHW mode (hot water)          |
 
-### Діагностика: boiler_report.sh
+### Diagnostics: boiler_report.sh
 
-**Файл:** `scripts/boiler_report.sh [hours]` (за замовчуванням 24 години)
+**File:** `scripts/boiler_report.sh [hours]` (default: 24 hours)
 
-**Вимоги:** SSH доступ до `homeassistant.local`, HA API token з `/data/.ha_token`, доступ до `otgw.local`.
+**Requirements:** SSH access to `homeassistant.local`, HA API token from `/data/.ha_token`, access to `otgw.local`.
 
-**Секції звіту:**
-1. **Поточний стан** — flame, температура води, return, modulation, CH режим (з OTGW API)
-2. **Кімнати** — поточна/цільова температура, demand, hvac_action для кожної кімнати
-3. **Flame цикли** — аналіз циклів горіння з розділенням на CH/DHW:
-   - Розподіл по тривалості: <30с (короткі), 30с-2хв, 2-10хв, >10хв
-   - Статистика по рівню модуляції
+**Report sections:**
+1. **Current state** — flame, water temp, return, modulation, CH mode (from OTGW API)
+2. **Rooms** — current/target temperature, demand, hvac_action per room
+3. **Flame cycles** — burn cycle analysis split by CH/DHW:
+   - Duration distribution: <30s (short), 30s-2min, 2-10min, >10min
+   - Stats by modulation level
    - Duty cycle
-4. **Автоматизація** — стан, останній тригер, кількість тригерів за день по джерелу
-5. **MaxMod зміни** — історія змін модуляції з валідацією відповідності demand
+4. **Automation** — state, last trigger, trigger count by source
+5. **MaxMod changes** — modulation change history with demand validation
 
-### Відомі проблеми та налаштування
+### Known Issues & Settings
 
-- Модуляція 20% — занадто низька, котел не може підтримувати полум'я
-- Модуляція 30% — оптимальна для низького demand, 0 коротких циклів
-- Модуляція 40% — може спричиняти короткі цикли при низькому demand
-- Короткий цикл = flame < 30 секунд (зношує котел)
-- Ціль: мінімізувати короткі цикли CH, тримати duty cycle стабільним
+- 20% modulation — too low, boiler cannot sustain flame
+- 30% modulation — optimal for low demand, 0 short cycles
+- 40% modulation — may cause short cycles at low demand
+- Short cycle = flame < 30 seconds (wears out boiler)
+- Goal: minimize CH short cycles, keep duty cycle stable
 
-## Thread / Matter інфраструктура
+## Thread / Matter Infrastructure
 
 ### Border Routers
 
-| Пристрій | Роль | Підключення | Примітка |
-|----------|------|-------------|----------|
-| **ZBT-2** (Nabu Casa) | OTBR addon, RCP | USB-A → HA Green | Ненадійний після рестартів HA |
-| **Aqara Hub M100** | Автономний BR | WiFi, USB-A живлення від HA Green | Основний, тримає мережу незалежно від HA |
+| Device | Role | Connection | Notes |
+|--------|------|------------|-------|
+| **ZBT-2** (Nabu Casa) | OTBR addon, RCP | USB-A → HA Green | Unreliable after HA restarts |
+| **Aqara Hub M100** | Autonomous BR + Zigbee hub | WiFi, USB-A powered from HA Green | Primary, maintains network independently of HA |
 
-Thread мережа: `ha-thread-da34`, два border routers для відмовостійкості.
+Thread network: `ha-thread-da34`, two border routers for failover.
 
 ### W100 Climate Sensors (Matter over Thread)
 
-| Entity prefix | Розташування |
-|---------------|-------------|
-| `bathroom_climate_sensor` | Ванна |
-| `toilet_climate_sensor` | Туалет |
-| `kitchen_climate_sensor` | Кухня |
-| `laundry_climate_sensor` | Пральня |
+| Entity prefix | Location |
+|---------------|----------|
+| `bathroom_climate_sensor` | Bathroom |
+| `toilet_climate_sensor` | Toilet |
+| `kitchen_climate_sensor` | Kitchen |
+| `laundry_climate_sensor` | Laundry |
 
-Sleepy end devices — при відновленні Thread мережі потрібно натиснути кнопку на кожному W100 щоб розбудити.
+Sleepy end devices — after Thread network recovery, press button on each W100 to wake up.
 
-### Відомі проблеми Thread/ZBT-2
+### Known Issues: Thread/ZBT-2
 
-- ZBT-2 OTBR часто не підключається після рестарту HA ("Unable to connect")
-- Причина: RCP архітектура — Thread стек в Docker addon, race condition при старті
-- Рішення при збої: зупинити OTBR → витягнути ZBT-2 → зачекати 1 хв → вставити → рестартнути HA
-- Якщо не допомагає: перепрошити firmware ZBT-2 через Settings → Devices
-- M100 забезпечує failover — W100 працюють навіть при вимкненому OTBR
+- ZBT-2 OTBR often fails to connect after HA restart ("Unable to connect")
+- Cause: RCP architecture — Thread stack runs in Docker addon, race condition at startup
+- Fix: stop OTBR → unplug ZBT-2 → wait 1 min → replug → restart HA
+- If that fails: reflash ZBT-2 firmware via Settings → Devices
+- M100 provides failover — W100 sensors stay online even with OTBR down
+
+## Aqara H2 EU Switch (Living Room)
+
+### Connection
+
+- **Protocol:** Matter over Thread (direct, without M100 bridge — lower latency)
+- **Mode:** Coupled (upper buttons control relays directly in hardware)
+- **No neutral:** Works without neutral wire (min 5W load)
+- **LED:** Configured via Aqara Home app (stored on device)
+- **Temporary setup:** Will switch to Zigbee via M100 when battery-powered switch arrives, to enable Aqara direct binding
+
+### Entity IDs
+
+| Entity | Description |
+|--------|-------------|
+| `light.living_room_1_left` | Channel 1 (left relay) |
+| `light.living_room_1_right` | Channel 2 (right relay) |
+| `event.living_room_1_upper_left` | Upper left button |
+| `event.living_room_1_lower_left` | Lower left button |
+| `event.living_room_1_upper_right` | Upper right button |
+| `event.living_room_1_lower_right` | Lower right button |
+
+### Automation: living_room_h2_switch
+
+**File:** `automations.yaml`, id: `living_room_h2_switch`
+
+- Upper buttons → toggle relays directly (coupled mode, instant, no automation)
+- Lower buttons → toggle corresponding light via automation
+
+### Naming Convention
+
+Format: `living_room_{switch_index}_{position}` — supports future additional switches (index 2, 3...)
+
+### Future: Aqara Binding (Pass-through)
+
+When the battery-powered Aqara switch arrives for the main entrance:
+1. Move H2 back to Zigbee via M100
+2. Add battery switch to Zigbee via M100
+3. Set up Aqara direct binding between the two switches
+4. Binding works at Zigbee protocol level — zero latency, no hub/HA needed

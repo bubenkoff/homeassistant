@@ -566,6 +566,34 @@
       gateway_id: otgw
       level: '{{ max_modulation | int }}'
   mode: single
+- id: 'living_room_h2_switch'
+  alias: Living Room H2 Switch - Lower Buttons
+  description: Lower buttons toggle lights (upper buttons control relays directly in coupled mode)
+  triggers:
+  - trigger: state
+    entity_id: event.living_room_1_lower_left
+    id: lower_left
+  - trigger: state
+    entity_id: event.living_room_1_lower_right
+    id: lower_right
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: lower_left
+      sequence:
+      - action: light.toggle
+        target:
+          entity_id: light.living_room_1_left
+    - conditions:
+      - condition: trigger
+        id: lower_right
+      sequence:
+      - action: light.toggle
+        target:
+          entity_id: light.living_room_1_right
+  mode: single
 - id: 'auto_update_scheduled'
   alias: Auto Update Scheduled
   description: Automatically update Home Assistant and components on schedule
