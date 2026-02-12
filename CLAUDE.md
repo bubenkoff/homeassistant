@@ -133,12 +133,12 @@ Sleepy end devices — after Thread network recovery, press button on each W100 
 
 | Entity | Description |
 |--------|-------------|
-| `light.living_room_1_left` | Channel 1 (left relay) |
-| `light.living_room_1_right` | Channel 2 (right relay) |
-| `event.living_room_1_upper_left` | Upper left button |
-| `event.living_room_1_lower_left` | Lower left button |
-| `event.living_room_1_upper_right` | Upper right button |
-| `event.living_room_1_lower_right` | Lower right button |
+| `light.living_room_front_door_left` | Channel 1 (left relay) |
+| `light.living_room_front_door_right` | Channel 2 (right relay) |
+| `event.living_room_front_door_upper_left` | Upper left button |
+| `event.living_room_front_door_lower_left` | Lower left button |
+| `event.living_room_front_door_upper_right` | Upper right button |
+| `event.living_room_front_door_lower_right` | Lower right button |
 
 ### Automation
 
@@ -146,7 +146,7 @@ Managed entirely in Aqara Home app (runs locally on M100 hub). No HA automation 
 
 ### Naming Convention
 
-Format: `living_room_{switch_index}_{position}` — supports future additional switches (index 2, 3...)
+Format: `living_room_{location}_{position}` — e.g. `front_door`, `back_door` for different switch locations
 
 ### Future: Aqara Binding (Pass-through)
 
