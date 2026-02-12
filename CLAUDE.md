@@ -133,12 +133,12 @@ Sleepy end devices — after Thread network recovery, press button on each W100 
 
 | Entity | Description |
 |--------|-------------|
-| `light.living_room_front_door_left` | Channel 1 (left relay) |
-| `light.living_room_front_door_right` | Channel 2 (right relay) |
-| `event.living_room_front_door_upper_left` | Upper left button |
-| `event.living_room_front_door_lower_left` | Lower left button |
-| `event.living_room_front_door_upper_right` | Upper right button |
-| `event.living_room_front_door_lower_right` | Lower right button |
+| `light.living_room_front_door_switch_left` | Channel 1 (left relay) |
+| `light.living_room_front_door_switch_right` | Channel 2 (right relay) |
+| `event.living_room_front_door_switch_upper_left` | Upper left button |
+| `event.living_room_front_door_switch_lower_left` | Lower left button |
+| `event.living_room_front_door_switch_upper_right` | Upper right button |
+| `event.living_room_front_door_switch_lower_right` | Lower right button |
 
 ### Automation
 
@@ -146,7 +146,7 @@ Managed entirely in Aqara Home app (runs locally on M100 hub). No HA automation 
 
 ### Naming Convention
 
-Format: `living_room_{location}_{position}` — e.g. `front_door`, `back_door` for different switch locations
+Format: `living_room_{location}_switch_{position}` — e.g. `front_door_switch`, `back_door_switch`
 
 ## Aqara H1 Wireless Switch (Living Room Back Door)
 
@@ -161,6 +161,6 @@ Format: `living_room_{location}_{position}` — e.g. `front_door`, `back_door` f
 
 | Entity | Description |
 |--------|-------------|
-| `event.living_room_back_door_left` | Left button |
-| `event.living_room_back_door_right` | Right button |
-| `sensor.living_room_back_door_battery` | Battery level |
+| `event.living_room_back_door_switch_left` | Left button |
+| `event.living_room_back_door_switch_right` | Right button |
+| `sensor.living_room_back_door_switch_battery` | Battery level |
