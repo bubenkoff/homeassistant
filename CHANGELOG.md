@@ -12,3 +12,5 @@ All notable changes to this project will be documented in this file.
 - Configure H2 in coupled mode (upper buttons = direct relay, lower buttons = toggle via automation)
 - Connect H2 via Matter/Thread directly (bypassing M100 Zigbee bridge) for lower latency
 - Add automation for H2 lower buttons to toggle lights
+- Switch H2 to Zigbee via M100 with decoupled mode; manage automations in Aqara Home app
+- Remove HA automation for H2 (replaced by Aqara Home automations on M100 hub)

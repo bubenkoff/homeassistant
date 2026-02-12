@@ -123,11 +123,11 @@ Sleepy end devices — after Thread network recovery, press button on each W100 
 
 ### Connection
 
-- **Protocol:** Matter over Thread (direct, without M100 bridge — lower latency)
-- **Mode:** Coupled (upper buttons control relays directly in hardware)
+- **Protocol:** Zigbee via M100 hub (bridged to HA through Matter)
+- **Mode:** Decoupled (all 4 buttons are wireless, relays controlled via Aqara automations)
 - **No neutral:** Works without neutral wire (min 5W load)
 - **LED:** Configured via Aqara Home app (stored on device)
-- **Temporary setup:** Will switch to Zigbee via M100 when battery-powered switch arrives, to enable Aqara direct binding
+- **Automations:** Managed in Aqara Home app (runs on M100 hub, no HA automation needed)
 
 ### Entity IDs
 
@@ -140,12 +140,9 @@ Sleepy end devices — after Thread network recovery, press button on each W100 
 | `event.living_room_1_upper_right` | Upper right button |
 | `event.living_room_1_lower_right` | Lower right button |
 
-### Automation: living_room_h2_switch
+### Automation
 
-**File:** `automations.yaml`, id: `living_room_h2_switch`
-
-- Upper buttons → toggle relays directly (coupled mode, instant, no automation)
-- Lower buttons → toggle corresponding light via automation
+Managed entirely in Aqara Home app (runs locally on M100 hub). No HA automation needed.
 
 ### Naming Convention
 
@@ -154,7 +151,6 @@ Format: `living_room_{switch_index}_{position}` — supports future additional s
 ### Future: Aqara Binding (Pass-through)
 
 When the battery-powered Aqara switch arrives for the main entrance:
-1. Move H2 back to Zigbee via M100
-2. Add battery switch to Zigbee via M100
-3. Set up Aqara direct binding between the two switches
-4. Binding works at Zigbee protocol level — zero latency, no hub/HA needed
+1. Add battery switch to Zigbee via M100
+2. Set up Aqara direct binding between battery switch and H2
+3. Binding works at Zigbee protocol level — zero latency, no hub/HA needed
