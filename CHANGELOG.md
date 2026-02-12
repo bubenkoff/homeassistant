@@ -14,3 +14,4 @@ All notable changes to this project will be documented in this file.
 - Add automation for H2 lower buttons to toggle lights
 - Switch H2 to Zigbee via M100 with coupled mode; lower button automations in Aqara Home app
 - Remove HA automation for H2 (replaced by Aqara Home automations on M100 hub)
+- Add Aqara H1 Wireless Switch for living room back door (pass-through via Aqara automations on M100)

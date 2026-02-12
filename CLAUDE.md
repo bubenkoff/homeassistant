@@ -148,9 +148,19 @@ Managed entirely in Aqara Home app (runs locally on M100 hub). No HA automation 
 
 Format: `living_room_{location}_{position}` — e.g. `front_door`, `back_door` for different switch locations
 
-### Future: Aqara Binding (Pass-through)
+## Aqara H1 Wireless Switch (Living Room Back Door)
 
-When the battery-powered Aqara switch arrives for the main entrance:
-1. Add battery switch to Zigbee via M100
-2. Set up Aqara direct binding between battery switch and H2
-3. Binding works at Zigbee protocol level — zero latency, no hub/HA needed
+### Connection
+
+- **Protocol:** Zigbee via M100 hub (bridged to HA through Matter)
+- **Battery:** CR2032
+- **Automations:** Managed in Aqara Home app (toggle H2 relays, runs locally on M100)
+- **Note:** Aqara binding (pass-through) only works between wired switches; battery switches use Aqara automations instead
+
+### Entity IDs
+
+| Entity | Description |
+|--------|-------------|
+| `event.living_room_back_door_left` | Left button |
+| `event.living_room_back_door_right` | Right button |
+| `sensor.living_room_back_door_battery` | Battery level |
