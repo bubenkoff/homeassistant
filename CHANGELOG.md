@@ -16,3 +16,4 @@ All notable changes to this project will be documented in this file.
 - Remove HA automation for H2 (replaced by Aqara Home automations on M100 hub)
 - Add Aqara H1 Wireless Switch for living room back door (pass-through via Aqara automations on M100)
 - Fix humidity control: sync dehumidifier with fan by lowering threshold from 5 to 0; add explicit medium fan threshold variable
+- Enable H1 multi-function mode; add double-click right button to toggle backyard floodlight

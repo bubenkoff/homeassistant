@@ -156,11 +156,18 @@ Format: `living_room_{location}_switch_{position}` — e.g. `front_door_switch`,
 - **Battery:** CR2032
 - **Automations:** Managed in Aqara Home app (toggle H2 relays, runs locally on M100)
 - **Note:** Aqara binding (pass-through) only works between wired switches; battery switches use Aqara automations instead
+- **Multi-function mode:** Supports single click, double click, long press
 
 ### Entity IDs
 
 | Entity | Description |
 |--------|-------------|
-| `event.living_room_back_door_switch_left` | Left button |
-| `event.living_room_back_door_switch_right` | Right button |
+| `event.living_room_back_door_switch_left` | Left button (multi_press_1, multi_press_2, long_press) |
+| `event.living_room_back_door_switch_right` | Right button (multi_press_1, multi_press_2, long_press) |
 | `sensor.living_room_back_door_switch_battery` | Battery level |
+
+### Automation: backyard_floodlight_switch
+
+**File:** `automations.yaml`, id: `backyard_floodlight_switch`
+
+- Double click right button → toggle `light.backyard_camera_floodlight`

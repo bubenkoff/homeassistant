@@ -567,6 +567,20 @@
       gateway_id: otgw
       level: '{{ max_modulation | int }}'
   mode: single
+- id: 'backyard_floodlight_switch'
+  alias: Backyard Floodlight - Back Door Switch
+  description: Double click right button on H1 toggles backyard camera floodlight
+  triggers:
+  - trigger: state
+    entity_id: event.living_room_back_door_switch_right
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.to_state.attributes.event_type == ''multi_press_2'' }}'
+  actions:
+  - action: light.toggle
+    target:
+      entity_id: light.backyard_camera_floodlight
+  mode: single
 - id: 'auto_update_scheduled'
   alias: Auto Update Scheduled
   description: Automatically update Home Assistant and components on schedule
