@@ -17,8 +17,9 @@
       }}'
   actions:
   - variables:
+      humidity_medium_threshold: 0
       humidity_high_threshold: 10
-      humidity_dehumidifier_threshold: 5
+      humidity_dehumidifier_threshold: 0
       base: '{{ states(''input_number.target_humidity'') | float }}'
       bathroom_offset: 0
       humidity_itho: '{{ states(''sensor.nrg_itho_e6d0_humidity'') | float(0) }}'
@@ -49,7 +50,7 @@
           preset_mode: High
     - conditions:
       - condition: template
-        value_template: '{{ max_excess > 0 and max_excess <= humidity_high_threshold }}'
+        value_template: '{{ max_excess > humidity_medium_threshold and max_excess <= humidity_high_threshold }}'
       sequence:
       - condition: template
         value_template: '{{ current_mode != ''Medium'' }}'
@@ -60,7 +61,7 @@
           preset_mode: Medium
     - conditions:
       - condition: template
-        value_template: '{{ max_excess <= 0 }}'
+        value_template: '{{ max_excess <= humidity_medium_threshold }}'
       sequence:
       - condition: template
         value_template: '{{ current_mode != ''Low'' }}'
