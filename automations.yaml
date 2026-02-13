@@ -569,7 +569,7 @@
   mode: single
 - id: 'backyard_floodlight_switch'
   alias: Backyard Floodlight - Back Door Switch
-  description: Double click right button on H1 toggles backyard camera floodlight
+  description: Double click right button on H1 toggles backyard camera floodlight (auto-off 15 min)
   triggers:
   - trigger: state
     entity_id: event.living_room_back_door_switch_right
@@ -577,10 +577,52 @@
   - condition: template
     value_template: '{{ trigger.to_state.attributes.event_type == ''multi_press_2'' }}'
   actions:
-  - action: light.toggle
-    target:
-      entity_id: light.backyard_camera_floodlight
-  mode: single
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.backyard_camera_floodlight
+        state: 'on'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.backyard_camera_floodlight
+    default:
+    - action: light.turn_on
+      target:
+        entity_id: light.backyard_camera_floodlight
+    - delay: "00:15:00"
+    - action: light.turn_off
+      target:
+        entity_id: light.backyard_camera_floodlight
+  mode: restart
+- id: 'front_door_floodlight_switch'
+  alias: Front Door Floodlight - Back Door Switch
+  description: Double click left button on H1 toggles front door camera floodlight (auto-off 15 min)
+  triggers:
+  - trigger: state
+    entity_id: event.living_room_back_door_switch_left
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.to_state.attributes.event_type == ''multi_press_2'' }}'
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.front_door_camera_floodlight
+        state: 'on'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.front_door_camera_floodlight
+    default:
+    - action: light.turn_on
+      target:
+        entity_id: light.front_door_camera_floodlight
+    - delay: "00:15:00"
+    - action: light.turn_off
+      target:
+        entity_id: light.front_door_camera_floodlight
+  mode: restart
 - id: 'auto_update_scheduled'
   alias: Auto Update Scheduled
   description: Automatically update Home Assistant and components on schedule

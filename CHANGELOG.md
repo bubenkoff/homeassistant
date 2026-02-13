@@ -17,3 +17,8 @@ All notable changes to this project will be documented in this file.
 - Add Aqara H1 Wireless Switch for living room back door (pass-through via Aqara automations on M100)
 - Fix humidity control: sync dehumidifier with fan by lowering threshold from 5 to 0; add explicit medium fan threshold variable
 - Enable H1 multi-function mode; add double-click right button to toggle backyard floodlight
+- Enable H2 multi-function mode; M100 Matter bridge does not forward multi-press events for wired switches (only initial_press)
+- Re-pair H2 to M100 to refresh Matter endpoints; rename entities to living_room_front_door_switch_* pattern
+- Submit bug report to Aqara support: M100 should expose multi_press_2/long_press for H2 like it does for H1
+- Add double-click left button on H1 (back door) to toggle front door camera floodlight
+- Change floodlight automations to auto-off after 15 min; double-click again to turn off immediately

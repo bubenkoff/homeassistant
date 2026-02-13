@@ -124,10 +124,11 @@ Sleepy end devices — after Thread network recovery, press button on each W100 
 ### Connection
 
 - **Protocol:** Zigbee via M100 hub (bridged to HA through Matter)
-- **Mode:** Coupled (upper buttons control relays directly; lower buttons via Aqara automations)
+- **Mode:** Coupled + multi-function (upper buttons control relays directly; lower buttons via Aqara automations)
 - **No neutral:** Works without neutral wire (min 5W load)
 - **LED:** Configured via Aqara Home app (stored on device)
 - **Automations:** Managed in Aqara Home app (runs on M100 hub, no HA automation needed)
+- **Known limitation:** M100 Matter bridge only exposes `initial_press` for H2 (wired switch), not `multi_press_2`/`long_press`. Bug report submitted to Aqara. H1 (wireless) works correctly with all event types.
 
 ### Entity IDs
 
@@ -166,8 +167,11 @@ Format: `living_room_{location}_switch_{position}` — e.g. `front_door_switch`,
 | `event.living_room_back_door_switch_right` | Right button (multi_press_1, multi_press_2, long_press) |
 | `sensor.living_room_back_door_switch_battery` | Battery level |
 
-### Automation: backyard_floodlight_switch
+### Automations
 
-**File:** `automations.yaml`, id: `backyard_floodlight_switch`
+**File:** `automations.yaml`
 
-- Double click right button → toggle `light.backyard_camera_floodlight`
+| ID | Trigger | Action |
+|----|---------|--------|
+| `backyard_floodlight_switch` | Double click right button | Toggle `light.backyard_camera_floodlight` |
+| `front_door_floodlight_switch` | Double click left button | Toggle `light.front_door_camera_floodlight` |
