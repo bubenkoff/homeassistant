@@ -22,3 +22,5 @@ All notable changes to this project will be documented in this file.
 - Submit bug report to Aqara support: M100 should expose multi_press_2/long_press for H2 like it does for H1
 - Add double-click left button on H1 (back door) to toggle front door camera floodlight
 - Change floodlight automations to auto-off after 15 min; double-click again to turn off immediately
+- Add second Aqara H1 Wireless Switch for stairs door; rename entities to living_room_stairs_door_switch_*
+- Simplify floodlight automations: merge 4 into 2, each with two triggers (back door + stairs door switches)
